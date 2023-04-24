@@ -1,2 +1,4 @@
 # NextJS_Basics
-A simple Next JS project which deals with some core concepts NEXT JS offers
+
+Run npm install 
+npm i next@latest react@latest react-dom@latest
