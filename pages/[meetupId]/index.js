@@ -1,47 +1,55 @@
+import { Fragment } from "react";
 import MeetupDetail from "../../components/meetups/MeetupDetail";
+import { MongoClient, ObjectId } from "mongodb";
+import Head from "next/head";
 
-function MeetupDetails() {
-    return <MeetupDetail
-        image='https://media.istockphoto.com/id/183276247/photo/parliament-hill-ottawa-canada.jpg?s=1024x1024&w=is&k=20&c=dv-APnwXuPsVVv-Tt7hEMXqTel2AhVl82KN5KAx5bHs='
-        title='temp'
-        address='temp'
-        description='temp'></MeetupDetail>
+function MeetupDetails(props) {
+  return <Fragment>
+    <Head>
+      <title>
+        {props.meetupData.title}
+      </title>
+      <meta name="description" content={props.meetupData.description}/>
+    </Head>
+    <MeetupDetail 
+    image={props.meetupData.image} 
+    title={props.meetupData.title} 
+    address={props.meetupData.address} 
+    description={props.meetupData.description}></MeetupDetail>
+    </Fragment> 
 }
 
 export async function getStaticPaths() {
-    return {
-      fallback: false,
-      paths: [
-        {
-          params: {
-            meetupId: 'm1',
-          },
-        },
-        {
-          params: {
-            meetupId: 'm2',
-          },
-        },
-      ],
-    };
-  }
+  const client = await MongoClient.connect('mongodb+srv://psabhiram:abhi03ram@cluster0.wzxe8.mongodb.net/meetups?retryWrites=true&w=majority');
+  const db = client.db();
+  const meetupsCollection = db.collection('meetups');
+  const meetups = await meetupsCollection.find({}, { _id: 1 }).toArray();
+  client.close();
+  return {
+    fallback: 'blocking',
+    paths: meetups.map(meetup => ({ params: { meetupId: meetup._id.toString() } })),
+  };
+}
 
 export async function getStaticProps(context) {
-    const meetupdId = context.params.meetupId;
-    console.log(meetupdId);
-    //fetch data from APIs for a single meetup
-    return {
-        props: {
-            meetupData: {
-                image:
-                    'https://media.istockphoto.com/id/183276247/photo/parliament-hill-ottawa-canada.jpg?s=1024x1024&w=is&k=20&c=dv-APnwXuPsVVv-Tt7hEMXqTel2AhVl82KN5KAx5bHs=',
-                id: 'm1',
-                title: 'temp',
-                address: 'temp',
-                description: 'temp',
-            },
-        },
-    };
+  const meetupId = context.params.meetupId;
+  const client = await MongoClient.connect('mongodb+srv://p_s_abhiram:abhi03ram@cluster0.eqluwhs.mongodb.net/meetups?retryWrites=true&w=majority');
+  const db = client.db();
+  const meetupsCollection = db.collection('meetups');
+  const selectedMeetup = await meetupsCollection.findOne({ _id: ObjectId(meetupId) });
+  client.close();
+  //fetch data from APIs for a single meetup
+  return {
+    props: {
+      meetupData: {
+        id: selectedMeetup._id.toString(),
+        title: selectedMeetup.title,
+        address: selectedMeetup.address,
+        image: selectedMeetup.image,
+        description: selectedMeetup.description
+      },
+    },
+  };
 }
 
 export default MeetupDetails
